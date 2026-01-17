@@ -134,11 +134,26 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
       --arg labels "dependencies,$LABEL" \
       --arg assignee "$ASSIGNEE" \
       '{title: $title, description: $description, source_branch: $source_branch, target_branch: $target_branch, labels: $labels, assignee_id: $assignee, remove_source_branch: true}' | \
-    curl -X POST \
+    curl -s -o response-body.txt -w "%{http_code}\n" -X POST \
       -H "Authorization: Bearer $GITLAB_TOKEN" \
       -H "Content-Type: application/json" \
       -d @- \
-      "https://$HOSTNAME/api/v4/projects/$project_id/merge_requests" || echo "Failed to create MR"
+      "https://$HOSTNAME/api/v4/projects/$project_id/merge_requests" > response-status.txt
+
+      # The -o and -w options are used to capture both response body and status code to files.
+      # This allows us to handle different status codes appropriately.
+      # Note that 409 means that MR could not be overwriten because it exists already (this is successful), 
+      # and some failures such as invalid host can return 200 along with an html error message in the body.
+      echo "Response Body: $(cat response-body.txt)"
+      status_code=$(cat response-status.txt)
+      if [ "$status_code" -eq 201 ]; then
+        echo "Response status: $status_code - Merge Request created successfully"
+      elif [ "$status_code" -eq 409 ]; then
+        echo "Response status: $status_code - Merge Request already exists"
+      else
+        echo "Response status: $status_code - Error creating Merge Request" | tee -a ../update-log.log
+        exit 1
+      fi
   else
     echo "Dry Run Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
   fi

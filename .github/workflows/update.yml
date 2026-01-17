@@ -9,7 +9,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     env:
-      DRY_RUN: "true"
+      DRY_RUN: "false"
       # To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable.
       GH_TOKEN: ${{ github.token }}
       # authenticate agains the GitLab server
@@ -47,14 +47,14 @@ jobs:
       # 8: dry run (omit MR creation if true)
 
       - run: echo "$(date)" > update-log.log
-      - if: always()
-        run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0 $DRY_RUN
+      #- if: always()
+      #  run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0 $DRY_RUN
       - if: always()
         run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main 810786 $DRY_RUN
-      - if: always()
-        run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786 $DRY_RUN  
-      - if: always()
-        run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0 $DRY_RUN
+      #- if: always()
+      #  run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786 $DRY_RUN  
+      #- if: always()
+      #  run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0 $DRY_RUN
 
       - name: Upload summary log file
         if: always()
