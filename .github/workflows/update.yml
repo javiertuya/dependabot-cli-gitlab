@@ -1,0 +1,46 @@
+name: Run Dependabot CLI
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  run-dependabot:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    env:
+      # To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable.
+      GH_TOKEN: ${{ github.token }}
+      # authenticate agains the GitLab server
+      GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+      # The log shows a 401 error when accesing the docker registry, but it seems that setting the credentials is not needed
+      #DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      #DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Checkout GitHub repo
+        uses: actions/checkout@v6
+
+      - name: Download Dependabot CLI
+        env:
+          # To use GitHub CLI in a GitHub Actions workflow, set the GL_TOKEN environment variable.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo dependabot/cli -p "*linux-amd64.tar.gz"
+          tar xzvf *.tar.gz >/dev/null 2>&1
+          ./dependabot --version
+          # permissions for shell files
+          chmod +x ./update.sh
+          chmod +x ./create.sh
+
+      # Run the dependabot update for each repo. Parameters:
+      # 1: Dependabot CLI job description file, including placeholders that will be replaced by the following params.
+      # 2: GitLab hostname (excluding path if any)
+      # 3: GitLab path (if GitLab is not installed in the host root, else empty)
+      # 4: GitLab repo name (namespace/repo)
+      # 5: Directory in the repo (or directories separated with comma, without spaces)
+      # 6: Target branch
+      - run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main
+      - run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main
+      - run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main
+      #.NET fails (Microsoft.Build, Version=15.1.0.0 not found): https://github.com/dependabot/cli/issues/517
+      #- run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main
