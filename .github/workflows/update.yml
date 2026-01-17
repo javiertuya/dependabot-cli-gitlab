@@ -34,14 +34,16 @@ jobs:
           chmod +x ./update.sh
           chmod +x ./create.sh
 
-      # Run the dependabot update for each repo. Parameters:
+      # Run the dependabot update for each repo.
+      # Parameters (placeholder name to be placed in the job description file between parentheses):
       # 1: Dependabot CLI job description file, including placeholders that will be replaced by the following params.
-      # 2: GitLab hostname (excluding path if any)
-      # 3: GitLab path (if GitLab is not installed in the host root, else empty)
-      # 4: GitLab repo name (namespace/repo)
-      # 5: Directory in the repo (or directories separated with comma, without spaces)
-      # 6: Target branch
+      # 2: ($GL_HOST) GitLab hostname (excluding path if any)
+      # 3: ($GL_PATH) GitLab path (if GitLab is not installed in the host root, else empty)
+      # 4: ($GL_REPO) GitLab repo name (namespace/repo)
+      # 5: ($GL_DIRECTORY) Directory in the repo (or directories separated with comma, without spaces), enclosed by square brackets in the job file.
+      # 6: ($GL_BRANCH) Target branch
       # 7: Assignee user id (0 = unassigned)
+
       #- if: always()
       #  run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0
       - if: always()
