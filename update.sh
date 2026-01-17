@@ -36,8 +36,18 @@ cat update-job.yml
 echo "**************************************************************************************************"
 
 # Dependabot will set the result in a json that will be used later to create the MRs
-$DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json
-#cat update-result.json
+# Workaround for nuget: in this case we need to clone the repo first because dependabot CLI seems to have an issue
+# (https://github.com/dependabot/cli/issues/517) that makes the update fail because it cannnot find Microsoft.Build, Version=15.1.0.0
+# Note1: this does not work in windows, but does in GitHub Actions linux runners
+# Note2: the log produced does not show a summary of the updates, but the update-result.json file is correctly created
+if [ "$ECOSYSTEM" = "nuget" ]; then
+  rm -rf update-workdir
+  git clone "https://oauth2:$GITLAB_TOKEN@$2$3/$4.git" update-workdir
+  $DEPENDABOT_CMD update -f update-job.yml --local update-workdir --timeout 20m > update-result.json
+  cat update-result.json
+else
+  $DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json
+fi
 
 # Create the MR,
 ./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7

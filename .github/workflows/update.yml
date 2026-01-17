@@ -46,4 +46,5 @@ jobs:
       #- run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main 810786
       #- run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786
       #.NET fails (Microsoft.Build, Version=15.1.0.0 not found): https://github.com/dependabot/cli/issues/517
-      #- run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0
+      #but this is solved with the workaround included in update.sh
+      - run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0
