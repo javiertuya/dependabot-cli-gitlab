@@ -44,6 +44,7 @@ jobs:
       # 6: ($GL_BRANCH) Target branch
       # 7: Assignee user id (0 = unassigned)
 
+      - run: echo "$(date)" > update-log.log
       #- if: always()
       #  run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0
       - if: always()
@@ -54,3 +55,11 @@ jobs:
       #but this is solved with the workaround included in update.sh
       #- if: always()
       #  run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0
+
+      - name: Upload summary log file
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: "update-log"
+          path: |
+            update-log.log

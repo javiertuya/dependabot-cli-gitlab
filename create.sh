@@ -29,7 +29,7 @@ fi
 echo "label: $LABEL"
 
 echo "**************************************************************************************************"
-echo "*** Creating gitlab MRs in $HOSTNAME for repo: $REPO, target branch: $TARGET_BRANCH , label: $LABEL, assignee: $ASSIGNEE ***"
+echo "*** Creating GitLab MRs in $HOSTNAME for repo: $REPO, target branch: $TARGET_BRANCH , label: $LABEL, assignee: $ASSIGNEE ***" | tee -a update-log.log
 echo "**************************************************************************************************"
 
 # In addition to the parameters, the gitlab token must be set via an environment variable
@@ -121,7 +121,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   git commit -m "$COMMIT_MSG"
   git push -f origin "$BRANCH_NAME" || exit 1
 
-  echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE"
+  echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
   project_id=${REPO//\//%2F}
   # Use jq to create JSON payload (to avoid issues with special characters)
   jq -n \

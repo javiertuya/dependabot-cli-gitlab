@@ -34,8 +34,8 @@ sed -e "s|\$GL_HOST|$2|" \
 ECOSYSTEM=$(grep "package-manager:" update-job.yml | sed 's/.*: //' | xargs)
 
 echo "**************************************************************************************************"
-echo "*** Dependabot CLI server: $2$3, package manager: $ECOSYSTEM"
-echo "*** Repository: $4, directory: $5, branch: $6, assignee id: $7"
+echo "*** Dependabot CLI job: $1, server: $2$3, package manager: $ECOSYSTEM" | tee -a update-log.log
+echo "*** Repository: $4, directory: $5, branch: $6, assignee id: $7" | tee -a update-log.log
 echo "*** Using this job description:"
 cat update-job.yml
 echo "**************************************************************************************************"
