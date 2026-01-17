@@ -40,16 +40,21 @@ if [ -z "$GITLAB_TOKEN" ]; then
 fi
 
 # Commits are creted in REPO_DIR as temporary work folder and pushed to GITLAB_REPO_URL
-GITLAB_REPO_URL="https://oauth2:$GITLAB_TOKEN@$HOSTNAME/$REPO"
+GITLAB_REPO_URL="https://oauth2:$GITLAB_TOKEN@$HOSTNAME/$REPO.git"
 
 # Clean and clone the GitLab repository into a subdirectory
 rm -rf "$REPO_DIR"
 git clone "$GITLAB_REPO_URL" "$REPO_DIR"
 cd "$REPO_DIR"
 
-git config --global user.email "support@gitlab.com"
-git config --global user.name "Dependabot Standalone"
-git config --global advice.detachedHead false
+# this is required to allow git commands, the email ensures that the he commits appear authored by the right user
+# If not set, the default valuees are those specified in the original create.sh script from Dependabot examples
+# (default values work fine in gitlab.com, but maybe not in other gitlab servers)
+GITLAB_EMAIL="${GITLAB_EMAIL:-support@github.com}"
+GITLAB_USERNAME="${GITLAB_USERNAME:-Dependabot Standalone}"
+git config user.email "$GITLAB_EMAIL"
+git config user.name "$GITLAB_USERNAME"
+git config advice.detachedHead false
 
 # Parse each create_pull_request event
 jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event; do
@@ -103,7 +108,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
     -H "Authorization: Bearer $GITLAB_TOKEN" \
     -H "Content-Type: application/json" \
     -d @- \
-    "https://gitlab.com/api/v4/projects/$project_id/merge_requests" || echo "Failed to create MR"
+    "https://$HOSTNAME/api/v4/projects/$project_id/merge_requests" || echo "Failed to create MR"
 
   echo "Returning to main branch for next PR"
   git checkout $TARGET_BRANCH

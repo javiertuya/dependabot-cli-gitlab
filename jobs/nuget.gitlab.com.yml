@@ -11,4 +11,5 @@ job:
 credentials:
   - type: git_source
     host: $GL_HOST
+    username: $GITLAB_USERNAME
     password: $GITLAB_TOKEN

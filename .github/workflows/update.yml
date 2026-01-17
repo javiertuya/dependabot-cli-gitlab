@@ -12,6 +12,8 @@ jobs:
       # To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable.
       GH_TOKEN: ${{ github.token }}
       # authenticate agains the GitLab server
+      GITLAB_USERNAME: ${{ secrets.GITLAB_USERNAME }}
+      GITLAB_EMAIL: ${{ secrets.GITLAB_EMAIL }}
       GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
       # The log shows a 401 error when accesing the docker registry, but it seems that setting the credentials is not needed
       #DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

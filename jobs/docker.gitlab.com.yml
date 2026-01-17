@@ -16,6 +16,7 @@ job:
 credentials:
   - type: git_source
     host: $GL_HOST
+    username: $GITLAB_USERNAME
     password: $GITLAB_TOKEN
 # The log shows a 401 error when accesing the docker registry, but it seems that setting the credentials is not needed
 #  - type: docker_registry
