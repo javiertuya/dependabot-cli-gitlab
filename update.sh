@@ -2,7 +2,12 @@
 
 # Performs the full update process by running Dependabot CLI and then creating/updating GitLab MRs.
 
-# See example usaes in .github/workflows/update.yml
+# See examples and descriptions of parameters in .github/workflows/update.yml
+
+if [ $# -ne 7 ]; then
+  echo "Usage: $0 <result-json-file> <hostname-with> <path> <repo> <directories> <base-branch> <assignee-id-or-0>"
+  exit 1
+fi
 
 if [ -f "dependabot" ]; then # Dependabot command a local downloaded file in CI
   DEPENDABOT_CMD=./dependabot
@@ -25,7 +30,7 @@ sed -e "s|\$GL_HOST|$2|" \
     -e "s|\$GL_BRANCH|$6|" \
     $1 > update-job.yml
 
-# Get language label (to ad in the MR) from package manager name
+# Get the package manager name from the job file for later use when creating the MR
 ECOSYSTEM=$(grep "package-manager:" update-job.yml | sed 's/.*: //' | xargs)
 
 echo "**************************************************************************************************"
@@ -42,12 +47,12 @@ echo "**************************************************************************
 # Note2: the log produced does not show a summary of the updates, but the update-result.json file is correctly created
 if [ "$ECOSYSTEM" = "nuget" ]; then
   rm -rf update-workdir
-  git clone "https://oauth2:$GITLAB_TOKEN@$2$3/$4.git" update-workdir
-  $DEPENDABOT_CMD update -f update-job.yml --local update-workdir --timeout 20m > update-result.json
+  git clone "https://oauth2:$GITLAB_TOKEN@$2$3/$4.git" update-workdir || exit 1
+  $DEPENDABOT_CMD update -f update-job.yml --local update-workdir --timeout 20m > update-result.json || exit 1
   cat update-result.json
 else
-  $DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json
+  $DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json || exit 1
 fi
 
 # Create the MR,
-./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7
+./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 || exit 1

@@ -44,7 +44,7 @@ GITLAB_REPO_URL="https://oauth2:$GITLAB_TOKEN@$HOSTNAME/$REPO.git"
 
 # Clean and clone the GitLab repository into a subdirectory
 rm -rf "$REPO_DIR"
-git clone "$GITLAB_REPO_URL" "$REPO_DIR"
+git clone "$GITLAB_REPO_URL" "$REPO_DIR" || exit 1
 cd "$REPO_DIR"
 
 # this is required to allow git commands, the email ensures that the he commits appear authored by the right user
@@ -65,6 +65,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   COMMIT_MSG=$(echo "$event" | jq -r '.data."commit-message"')
   BRANCH_NAME="dependabot/$ECOSYSTEM/$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
 
+  echo "**************************************************************"
   echo "Processing PR: $PR_TITLE"
   echo "  Base SHA: $BASE_SHA"
   echo "  Branch: $BRANCH_NAME"
@@ -118,7 +119,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   # Commit and push
   echo "Committing and pushing changes to $BRANCH_NAME"
   git commit -m "$COMMIT_MSG"
-  git push -f origin "$BRANCH_NAME"
+  git push -f origin "$BRANCH_NAME" || exit 1
 
   echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE"
   project_id=${REPO//\//%2F}
