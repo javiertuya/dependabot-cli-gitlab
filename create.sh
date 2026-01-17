@@ -97,6 +97,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   # Instead of using a hash for the branch name, create a more readable branch name (based on the PR title and a subset of the commit hash)
   BRANCH_NAME="$PR_TITLE"
   BRANCH_NAME="${BRANCH_NAME//Bump /}"
+  BRANCH_NAME="${BRANCH_NAME//bump /}"
   BRANCH_NAME="${BRANCH_NAME//the /}"
   BRANCH_NAME="${BRANCH_NAME// from / }"
   BRANCH_NAME="${BRANCH_NAME// to / }"
@@ -118,7 +119,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   fi
   current_count=$(echo "$current" | jq 'length')
   if [ "$current_count" -gt 0 ]; then
-    echo "  An open Merge Request for this branch already exists. Skipping branch and MR creation."
+    echo "Skip existing Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
     continue
   fi
 
@@ -136,7 +137,16 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
     else
       mkdir -p "$(dirname "$FILE_PATH")"
       chmod +w "$FILE_PATH" || true
-      echo "$file" | jq -r '.content' > "$FILE_PATH"
+
+      # The updated content is by default utf encoded, but nuget produces base64 encoded content. Handle both cases 
+      content_encoding=$(echo "$file" | jq -r '.content_encoding')
+      echo "Writing updated file: $FILE_PATH (encoding: $content_encoding)"
+      if [ "$content_encoding" = "base64" ]; then
+        echo "$file" | jq -r '.content' | base64 --decode > "$FILE_PATH"
+      else
+        echo "$file" | jq -r '.content' > "$FILE_PATH"
+      fi
+
       # Workaround for mssql-jdbc jre version qualifier issue (continued)
       if [ "$PATCH_JRE11" != "" ] && [[ "$FILE_PATH" == *"pom.xml"* ]]; then
         echo "    Patching $FILE_PATH to set mssql-jdbc version to $PATCH_JRE11 with jre8 qualifier"
@@ -152,7 +162,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   if [ "$DRY_RUN" != "true" ]; then
     git push -f origin "$BRANCH_NAME" || exit 1
 
-    echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
+    echo "Creating new Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
     project_id=${REPO//\//%2F}
     # Use jq to create JSON payload (to avoid issues with special characters)
     jq -n \
