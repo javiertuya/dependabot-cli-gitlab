@@ -25,6 +25,7 @@ echo "using package manager: $ECOSYSTEM"
 if [ "$ECOSYSTEM" = "maven" ]; then LABEL="java"
 elif [ "$ECOSYSTEM" = "npm_and_yarn" ]; then LABEL="javascript"
 elif [ "$ECOSYSTEM" = "nuget" ]; then LABEL=".NET"
+elif [ "$ECOSYSTEM" = "pip" ]; then LABEL="python"
 else LABEL="$ECOSYSTEM"
 fi
 echo "label: $LABEL"

@@ -33,6 +33,7 @@ sed -e "s|\$GL_HOST|$2|" \
 # Get the package manager name from the job file for later use when creating the MR
 ECOSYSTEM=$(grep "package-manager:" update-job.yml | sed 's/.*: //' | xargs)
 
+echo "" >> update-log.log
 echo "**************************************************************************************************"
 echo "*** Dependabot CLI job: $1, server: $2$3, package manager: $ECOSYSTEM" | tee -a update-log.log
 echo "*** Repository: $4, directory: $5, branch: $6, assignee id: $7" | tee -a update-log.log

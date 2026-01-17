@@ -1,7 +1,7 @@
 name: Run Dependabot CLI
 on:
   workflow_dispatch:
-  push:
+  #push:
 
 jobs:
   run-dependabot:
@@ -9,7 +9,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     env:
-      DRY_RUN: "false"
+      DRY_RUN: "true"
       # To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable.
       GH_TOKEN: ${{ github.token }}
       # authenticate agains the GitLab server
@@ -44,17 +44,17 @@ jobs:
       # 5: ($GL_DIRECTORY) Directory in the repo (or directories separated with comma, without spaces), enclosed by square brackets in the job file.
       # 6: ($GL_BRANCH) Target branch
       # 7: Assignee user id (0 = unassigned)
-      # 8: dry run (omit MR creation if true)
+      # 8: dry run (omit branch and MR creation if true)
 
       - run: echo "$(date)" > update-log.log
-      #- if: always()
-      #  run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0 $DRY_RUN
+      - if: always()
+        run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0 $DRY_RUN
       - if: always()
         run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main 810786 $DRY_RUN
-      #- if: always()
-      #  run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786 $DRY_RUN  
-      #- if: always()
-      #  run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0 $DRY_RUN
+      - if: always()
+        run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786 $DRY_RUN  
+      - if: always()
+        run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0 $DRY_RUN
 
       - name: Upload summary log file
         if: always()
