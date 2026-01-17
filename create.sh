@@ -7,8 +7,8 @@
 
 set -euo pipefail
 
-if [ $# -ne 6 ]; then
-  echo "Usage: $0 <result-json-file> <hostname-with-path> <repo> <target-branch> <label> <assignee-id-or-0>"
+if [ $# -ne 7 ]; then
+  echo "Usage: $0 <result-json-file> <hostname-with-path> <repo> <target-branch> <label> <assignee-id-or-0> <dry-run>"
   exit 1
 fi
 
@@ -18,6 +18,7 @@ REPO="$3"
 TARGET_BRANCH="$4"
 ECOSYSTEM="$5"
 ASSIGNEE="$6"
+DRY_RUN="$7"
 REPO_DIR="update-workdir"
 
 echo "using package manager: $ECOSYSTEM"
@@ -119,24 +120,28 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   # Commit and push
   echo "Committing and pushing changes to $BRANCH_NAME"
   git commit -m "$COMMIT_MSG"
-  git push -f origin "$BRANCH_NAME" || exit 1
+  if [ "$DRY_RUN" != "true" ]; then
+    git push -f origin "$BRANCH_NAME" || exit 1
 
-  echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
-  project_id=${REPO//\//%2F}
-  # Use jq to create JSON payload (to avoid issues with special characters)
-  jq -n \
-    --arg title "$PR_TITLE" \
-    --arg description "$PR_BODY" \
-    --arg source_branch "$BRANCH_NAME" \
-    --arg target_branch "$TARGET_BRANCH" \
-    --arg labels "dependencies,$LABEL" \
-    --arg assignee "$ASSIGNEE" \
-    '{title: $title, description: $description, source_branch: $source_branch, target_branch: $target_branch, labels: $labels, assignee_id: $assignee, remove_source_branch: true}' | \
-  curl -X POST \
-    -H "Authorization: Bearer $GITLAB_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d @- \
-    "https://$HOSTNAME/api/v4/projects/$project_id/merge_requests" || echo "Failed to create MR"
+    echo "Creating Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
+    project_id=${REPO//\//%2F}
+    # Use jq to create JSON payload (to avoid issues with special characters)
+    jq -n \
+      --arg title "$PR_TITLE" \
+      --arg description "$PR_BODY" \
+      --arg source_branch "$BRANCH_NAME" \
+      --arg target_branch "$TARGET_BRANCH" \
+      --arg labels "dependencies,$LABEL" \
+      --arg assignee "$ASSIGNEE" \
+      '{title: $title, description: $description, source_branch: $source_branch, target_branch: $target_branch, labels: $labels, assignee_id: $assignee, remove_source_branch: true}' | \
+    curl -X POST \
+      -H "Authorization: Bearer $GITLAB_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d @- \
+      "https://$HOSTNAME/api/v4/projects/$project_id/merge_requests" || echo "Failed to create MR"
+  else
+    echo "Dry Run Merge Request for $BRANCH_NAME with title: $PR_TITLE" | tee -a ../update-log.log
+  fi
 
   echo "Returning to main branch for next PR"
   git checkout $TARGET_BRANCH

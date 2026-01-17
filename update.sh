@@ -4,8 +4,8 @@
 
 # See examples and descriptions of parameters in .github/workflows/update.yml
 
-if [ $# -ne 7 ]; then
-  echo "Usage: $0 <result-json-file> <hostname-with> <path> <repo> <directories> <base-branch> <assignee-id-or-0>"
+if [ $# -ne 8 ]; then
+  echo "Usage: $0 <result-json-file> <hostname-with> <path> <repo> <directories> <base-branch> <assignee-id-or-0> <dry-run>"
   exit 1
 fi
 
@@ -55,4 +55,4 @@ else
 fi
 
 # Create the MR,
-./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 || exit 1
+./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 $8 || exit 1
