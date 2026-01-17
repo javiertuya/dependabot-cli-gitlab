@@ -65,13 +65,13 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   PR_TITLE=$(echo "$event" | jq -r '.data."pr-title"')
   PR_BODY=$(echo "$event" | jq -r '.data."pr-body"')
   COMMIT_MSG=$(echo "$event" | jq -r '.data."commit-message"')
-  BRANCH_NAME="dependabot/$ECOSYSTEM/$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
+  #BRANCH_NAME="dependabot/$ECOSYSTEM/$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
+  COMMIT_MSG_HASH="$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
 
   echo "**************************************************************"
   echo "Processing PR: $PR_TITLE"
   echo "  Base SHA: $BASE_SHA"
-  echo "  Branch: $BRANCH_NAME"
-
+  
   # Workaround for mssql-jdbc jre version qualifier issue in maven projects: https://github.com/dependabot/dependabot-core/issues/13911
   # Since January 2025, dependabot ignores the .jre8 non standard qualifier when updating mssql-jdbc dependency, leading to wong updates
   # Check if the update is for mssql-jdbc and if the version change is only in the jre qualifier, skip the MR creation
@@ -93,6 +93,20 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
       PATCH_JRE11="$after" # to be used later after wrtiting the changed files
     fi
   fi
+
+  # Instead of using a hash for the branch name, create a more readable branch name (based on the PR title and a subset of the commit hash)
+  BRANCH_NAME="$PR_TITLE"
+  BRANCH_NAME="${BRANCH_NAME//Bump /}"
+  BRANCH_NAME="${BRANCH_NAME//the /}"
+  BRANCH_NAME="${BRANCH_NAME// from / }"
+  BRANCH_NAME="${BRANCH_NAME// to / }"
+  BRANCH_NAME="${BRANCH_NAME//[^a-zA-Z0-9.-]/_}"
+  BRANCH_NAME="${BRANCH_NAME//__/_}"
+  BRANCH_NAME="dependabot/$ECOSYSTEM/$BRANCH_NAME-${COMMIT_MSG_HASH:0:7}"
+  if (( ${#BRANCH_NAME} > 100 )); then # back to the hash based name if too long
+    BRANCH_NAME="dependabot/$ECOSYSTEM/$COMMIT_MSG_HASH"
+  fi
+  echo "  Branch: $BRANCH_NAME"
 
   # Create and checkout new branch from base commit
   git fetch origin
@@ -145,7 +159,7 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
       # This allows us to handle different status codes appropriately.
       # Note that 409 means that MR could not be overwriten because it exists already (this is successful), 
       # and some failures such as invalid host can return 200 along with an html error message in the body.
-      echo "Response Body: $(cat response-body.txt)"
+      #echo "Response Body: $(cat response-body.txt)"
       status_code=$(cat response-status.txt)
       if [ "$status_code" -eq 201 ]; then
         echo "Response status: $status_code - Merge Request created successfully"
