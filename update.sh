@@ -25,9 +25,12 @@ sed -e "s|\$GL_HOST|$2|" \
     -e "s|\$GL_BRANCH|$6|" \
     $1 > update-job.yml
 
+# Get language label (to ad in the MR) from package manager name
+ECOSYSTEM=$(grep "package-manager:" update-job.yml | sed 's/.*: //' | xargs)
+
 echo "**************************************************************************************************"
-echo "*** Dependabot CLI server: $2$3"
-echo "*** Repository: $4, directory: $5, branch: $6"
+echo "*** Dependabot CLI server: $2$3, package manager: $ECOSYSTEM"
+echo "*** Repository: $4, directory: $5, branch: $6, assignee id: $7"
 echo "*** Using this job description:"
 cat update-job.yml
 echo "**************************************************************************************************"
@@ -36,3 +39,5 @@ echo "**************************************************************************
 $DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json
 #cat update-result.json
 
+# Create the MR,
+./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7

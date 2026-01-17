@@ -39,8 +39,9 @@ jobs:
       # 4: GitLab repo name (namespace/repo)
       # 5: Directory in the repo (or directories separated with comma, without spaces)
       # 6: Target branch
-      - run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main
-      - run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main
-      - run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main
+      # 7: Assignee user id (0 = unassigned)
+      - run: ./update.sh jobs/maven.gitlab.com.yml  gitlab.com "" javiertuya/dashgit-test /java main 0
+      #- run: ./update.sh jobs/docker.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /docker main 810786
+      #- run: ./update.sh jobs/js.gitlab.com.yml     gitlab.com "" javiertuya/dashgit-test /js/app,/js/test main 810786
       #.NET fails (Microsoft.Build, Version=15.1.0.0 not found): https://github.com/dependabot/cli/issues/517
-      #- run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main
+      #- run: ./update.sh jobs/nuget.gitlab.com.yml gitlab.com "" javiertuya/dashgit-test /net main 0

@@ -10,4 +10,4 @@ Scripts to run Dependabot CLI for GitLab repos.
 - Run the main script `update.sh` with parameters (See the description of parameters in .github/workflows/update.yml):
   - Copies the job description file indicated by the first parameter to `update-job.yml` and replaces the placeholders by the parameters (except GITLAB_TOKEN)
   - Runs the dependabot cli command to produce the `update-result.json` that contains the required info about the MRs to to update
-  - TODO Runs the `create.sh` script to create the MRs
+  - Runs the `create.sh` script to create the GitLab MRs
