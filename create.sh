@@ -108,6 +108,20 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   fi
   echo "  Branch: $BRANCH_NAME"
 
+  # Check if a merge request already exists for this source branch, if so, skip creating another one
+  # Includes error handling for HTTP errors or authentication failures
+  echo "  Checking if MR already exists for this branch..."
+  if ! current=$(curl -s -f -H "Authorization: Bearer $GITLAB_TOKEN" \
+      "https://$HOSTNAME/api/v4/projects/${REPO//\//%2F}/merge_requests?state=opened&source_branch=${BRANCH_NAME//\//%2F}"); then
+    echo "  Error checking merge requests (HTTP error or authentication failed)" | tee -a ../update-log.log
+    exit 1
+  fi
+  current_count=$(echo "$current" | jq 'length')
+  if [ "$current_count" -gt 0 ]; then
+    echo "  An open Merge Request for this branch already exists. Skipping branch and MR creation."
+    continue
+  fi
+
   # Create and checkout new branch from base commit
   git fetch origin
   git checkout "$BASE_SHA"
