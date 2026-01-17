@@ -69,6 +69,28 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   echo "  Base SHA: $BASE_SHA"
   echo "  Branch: $BRANCH_NAME"
 
+  # Workaround for mssql-jdbc jre version qualifier issue in maven projects: https://github.com/dependabot/dependabot-core/issues/13911
+  # Since January 2025, dependabot ignores the .jre8 non standard qualifier when updating mssql-jdbc dependency, leading to wong updates
+  # Check if the update is for mssql-jdbc and if the version change is only in the jre qualifier, skip the MR creation
+  PATCH_JRE11=""
+  dependency=$(echo "$event" | jq -r '.data.dependencies[0].name')
+  if [ "$dependency" = "com.microsoft.sqlserver:mssql-jdbc" ]; then
+    before=$(echo "$event" | jq -r '.data.dependencies[0]."previous-version"')
+    after=$(echo "$event" | jq -r '.data.dependencies[0]."version"')
+    echo "  Applying workaround for mssql-jdbc jre version qualifier:"
+    echo "    Try to update dependency: $dependency from $before to $after"
+    if [ "${before//jre8/}" = "${after//jre11/}" ]; then
+      echo "    Update contains the same version with different jre qualifier. Skipping creation of MR."
+      continue
+    else
+      echo "    Different versions detected. Proceeding with MR creation by setting the $after qualifier to jre8."
+      PR_TITLE="${PR_TITLE//$after/${after//jre11/jre8}} (PATCHED)"
+      PR_BODY="${PR_BODY//$after/${after//jre11/jre8}} (PATCHED)"
+      COMMIT_MSG="${COMMIT_MSG//$after/${after//jre11/jre8}} (PATCHED)"
+      PATCH_JRE11="$after" # to be used later after wrtiting the changed files
+    fi
+  fi
+
   # Create and checkout new branch from base commit
   git fetch origin
   git checkout "$BASE_SHA"
@@ -84,6 +106,11 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
       mkdir -p "$(dirname "$FILE_PATH")"
       chmod +w "$FILE_PATH" || true
       echo "$file" | jq -r '.content' > "$FILE_PATH"
+      # Workaround for mssql-jdbc jre version qualifier issue (continued)
+      if [ "$PATCH_JRE11" != "" ] && [[ "$FILE_PATH" == *"pom.xml"* ]]; then
+        echo "    Patching $FILE_PATH to set mssql-jdbc version to $PATCH_JRE11 with jre8 qualifier"
+        sed -i "s#<version>$PATCH_JRE11</version>#<version>${PATCH_JRE11//jre11/jre8}</version>#g" "$FILE_PATH"
+      fi
       git add "$FILE_PATH"
     fi
   done
