@@ -96,11 +96,13 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
 
   # Instead of using a hash for the branch name, create a more readable branch name (based on the PR title and a subset of the commit hash)
   BRANCH_NAME="$PR_TITLE"
+  echo "  Branch: $BRANCH_NAME"
   BRANCH_NAME="${BRANCH_NAME//Bump /}"
   BRANCH_NAME="${BRANCH_NAME//bump /}"
   BRANCH_NAME="${BRANCH_NAME//the /}"
   BRANCH_NAME="${BRANCH_NAME// from / }"
   BRANCH_NAME="${BRANCH_NAME// to / }"
+  BRANCH_NAME="${BRANCH_NAME//\`/}"
   BRANCH_NAME="${BRANCH_NAME//[^a-zA-Z0-9.-]/_}"
   BRANCH_NAME="${BRANCH_NAME//__/_}"
   BRANCH_NAME="dependabot/$ECOSYSTEM/$BRANCH_NAME-${COMMIT_MSG_HASH:0:7}"
