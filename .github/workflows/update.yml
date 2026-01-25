@@ -9,7 +9,7 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     env:
-      DRY_RUN: "false"
+      DRY_RUN: "true"
       # To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable.
       GH_TOKEN: ${{ github.token }}
       # authenticate agains the GitLab server
