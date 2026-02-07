@@ -55,5 +55,14 @@ else
   $DEPENDABOT_CMD update -f update-job.yml --timeout 20m > update-result.json || exit 1
 fi
 
-# Create the MR,
-./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 $8 || exit 1
+# Create the MR, retry once if fails
+./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 $8
+if [ $? -ne 0 ]; then
+  echo "*** Error executing create.sh, retry after a delay"  | tee -a update-log.log
+  sleep 10
+  ./create.sh update-result.json $2$3 $4 $6 $ECOSYSTEM $7 $8
+  if [ $? -ne 0 ]; then
+    echo "*** Error executing create.sh after retry, exiting with error" | tee -a update-log.log
+    exit 1
+  fi
+fi
