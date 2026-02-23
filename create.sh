@@ -65,6 +65,12 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   PR_TITLE=$(echo "$event" | jq -r '.data."pr-title"')
   PR_BODY=$(echo "$event" | jq -r '.data."pr-body"')
   COMMIT_MSG=$(echo "$event" | jq -r '.data."commit-message"')
+  # Related to the issue of coverlet.collector update failure (see comment in update.sh), skip create pull request for objects with empty attributes
+  if [ -z "$BASE_SHA" ] || [ -z "$PR_TITLE" ] || [ -z "$PR_BODY" ] || [ -z "$COMMIT_MSG" ]; then
+    echo "Error creating Merge Request. Some required field (e.g. BASE_SHA) is empty. Skipping." | tee -a ../update-log.log
+    echo "The event was: $event" | tee -a ../update-log.log
+    continue
+  fi
   #BRANCH_NAME="dependabot/$ECOSYSTEM/$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
   COMMIT_MSG_HASH="$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
 
