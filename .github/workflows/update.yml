@@ -58,8 +58,9 @@ jobs:
 
       - name: Upload summary log file
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: "update-log"
           path: |
             update-log.log
+          archive: false
