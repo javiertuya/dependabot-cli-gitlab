@@ -66,10 +66,13 @@ jq -c 'select(.type == "create_pull_request")' "../$INPUT" | while read -r event
   PR_BODY=$(echo "$event" | jq -r '.data."pr-body"')
   COMMIT_MSG=$(echo "$event" | jq -r '.data."commit-message"')
   # Related to the issue of coverlet.collector update failure (see comment in update.sh), skip create pull request for objects with empty attributes
-  if [ -z "$BASE_SHA" ] || [ -z "$PR_TITLE" ] || [ -z "$PR_BODY" ] || [ -z "$COMMIT_MSG" ]; then
-    echo "Error creating Merge Request. Some required field (e.g. BASE_SHA) is empty. Skipping." | tee -a ../update-log.log
+  # Other problems have been observed in cases where PR_BODY is very large; it is not included as mandatory.
+  if [ -z "$BASE_SHA" ] || [ -z "$PR_TITLE" ] || [ -z "$COMMIT_MSG" ]; then
+    echo "Error creating Merge Request. Some required field (BASE_SHA, PR_TITLE or COMMIT_MSG) is empty. Skipping." | tee -a ../update-log.log
     echo "The event was: $event" | tee -a ../update-log.log
     continue
+  elif [ -z "$PR_BODY" ]; then
+    echo "Warning: PR_BODY is empty. Proceeding with MR creation without body." | tee -a ../update-log.log
   fi
   #BRANCH_NAME="dependabot/$ECOSYSTEM/$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
   COMMIT_MSG_HASH="$(echo -n "$COMMIT_MSG" | sha1sum | awk '{print $1}')"
